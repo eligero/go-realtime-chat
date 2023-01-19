@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/eligero/go-realtime-chat/trace"
 	"github.com/gorilla/websocket"
 )
 
@@ -30,6 +31,9 @@ type room struct {
 
 	// hold all current clients in this room
 	clients map[*client]bool
+
+	// tracer will receive trace information of activity in the room
+	tracer trace.Tracer
 }
 
 // newRoom makes a new room, creating the channels and map needed to be created
@@ -47,13 +51,17 @@ func (r *room) run() {
 		select { // r.clients map is only ever modified by one thing at a time
 		case client := <-r.join: // joining
 			r.clients[client] = true
+			r.tracer.Trace("New client joined")
 		case client := <-r.leave: // leaving
 			delete(r.clients, client) // delete client key from clients map
 			close(client.send)        // close the channel
+			r.tracer.Trace("Client left")
 		case msg := <-r.forward: // forward message to all clients
+			r.tracer.Trace("Message received: ", string(msg))
 			for client := range r.clients {
 				// Add the message to each client's send channel
 				client.send <- msg
+				r.tracer.Trace("-- sent to client")
 			}
 		}
 	}
