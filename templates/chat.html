@@ -35,7 +35,7 @@
                     alert("Error: Your Browser does not support web sockets")
                 } else {
                     <!-- Open the WebSocket -->
-                    socket = new WebSocket("ws://localhost:8080/room");
+                    socket = new WebSocket("ws://{{.Host}}/room");
                     <!-- Event handlers for onclose a onmessage -->
                     socket.onclose = function() {
                         alert("Connection has been closed");
