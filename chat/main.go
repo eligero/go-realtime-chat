@@ -4,12 +4,9 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 	"text/template"
-
-	"github.com/eligero/go-realtime-chat/trace"
 )
 
 type templateHandler struct {
@@ -31,7 +28,6 @@ func main() {
 	var addr = flag.String("addr", ":8080", "The address of the application")
 	flag.Parse() // parse the flags
 	r := newRoom()
-	r.tracer = trace.New(os.Stdout)
 
 	http.Handle("/", &templateHandler{filename: "chat.html"})
 	http.Handle("/room", r)
