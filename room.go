@@ -1,5 +1,23 @@
 package main
 
+import (
+	"log"
+	"net/http"
+
+	"github.com/gorilla/websocket"
+)
+
+const (
+	socketBubberSize  = 1024
+	messageBufferSize = 256
+)
+
+// In order to use web sockets
+var upgrader = &websocket.Upgrader{
+	ReadBufferSize:  socketBubberSize,
+	WriteBufferSize: socketBubberSize,
+}
+
 type room struct {
 	// channel that holds incoming messages that should be forwarded to the other clients
 	forward chan []byte
@@ -12,6 +30,16 @@ type room struct {
 
 	// hold all current clients in this room
 	clients map[*client]bool
+}
+
+// newRoom makes a new room, creating the channels and map needed to be created
+func newRoom() *room {
+	return &room{
+		forward: make(chan []byte),
+		join:    make(chan *client),
+		leave:   make(chan *client),
+		clients: make(map[*client]bool),
+	}
 }
 
 func (r *room) run() {
@@ -29,4 +57,33 @@ func (r *room) run() {
 			}
 		}
 	}
+}
+
+// room acts as a handler
+func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// get the socket
+	socket, err := upgrader.Upgrade(w, req, nil)
+	if err != nil {
+		log.Fatal("ServeHTTP: ", err)
+		return
+	}
+
+	// create the client
+	client := &client{
+		socket: socket,
+		send:   make(chan []byte, messageBufferSize),
+		room:   r,
+	}
+
+	// pass the client into the join channel for the current room
+	r.join <- client
+
+	// defer leaving operation for when the client is finished
+	defer func() { r.leave <- client }()
+
+	// goroutine
+	go client.write()
+
+	// Block operations, but keeping the connection alive, until is time to close it
+	client.read()
 }
