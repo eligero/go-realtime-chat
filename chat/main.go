@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/gomniauth/providers/facebook"
 	"github.com/stretchr/gomniauth/providers/github"
 	"github.com/stretchr/gomniauth/providers/google"
+	"github.com/stretchr/objx"
 )
 
 type templateHandler struct {
@@ -27,7 +28,16 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.once.Do(func() { // load, compile and execute the template
 		t.thTemplate = template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
 	})
-	t.thTemplate.Execute(w, r) // Write the output to the ResponseWriter
+
+	data := map[string]interface{}{
+		"Host": r.Host,
+	}
+
+	if authCookie, err := r.Cookie("auth"); err == nil {
+		data["UserData"] = objx.MustFromBase64(authCookie.Value)
+	}
+
+	t.thTemplate.Execute(w, data) // Write the output to the ResponseWriter
 }
 
 func main() {
