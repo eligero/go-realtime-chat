@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/stretchr/gomniauth"
+	"github.com/stretchr/gomniauth/providers/github"
 	"github.com/stretchr/gomniauth/providers/google"
 )
 
@@ -35,6 +36,7 @@ func main() {
 	gomniauth.SetSecurityKey(os.Getenv("security_key"))
 	gomniauth.WithProviders(
 		google.New(os.Getenv("google_key"), os.Getenv("google_secret"), "http://localhost:8080/auth/callback/google"),
+		github.New(os.Getenv("github_key"), os.Getenv("github_secret"), "http://localhost:8080/auth/callback/github"),
 	)
 
 	r := newRoom()
