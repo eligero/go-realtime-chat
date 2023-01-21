@@ -51,7 +51,7 @@ func main() {
 		facebook.New(os.Getenv("facebook_key"), os.Getenv("facebook_secret"), "http://localhost:8080/auth/callback/facebook"),
 	)
 
-	r := newRoom(UseAuthAvatar)
+	r := newRoom(UseGravatar)
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
