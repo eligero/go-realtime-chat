@@ -51,7 +51,7 @@ func main() {
 		facebook.New(os.Getenv("facebook_key"), os.Getenv("facebook_secret"), "http://localhost:8080/auth/callback/facebook"),
 	)
 
-	r := newRoom(UseGravatar)
+	r := newRoom(UseFileSystemAvatar)
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
@@ -67,6 +67,13 @@ func main() {
 		w.Header().Set("Location", "/chat")
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
+	http.Handle("/upload", &templateHandler{filename: "upload.html"})
+	http.HandleFunc("/uploader", uploaderHandler)
+	http.Handle(
+		"/avatars/",
+		http.StripPrefix(
+			"/avatars/",
+			http.FileServer(http.Dir("./avatars"))))
 
 	// Run the room in a goroutine
 	go r.run()
