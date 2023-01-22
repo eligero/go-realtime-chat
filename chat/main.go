@@ -16,6 +16,12 @@ import (
 	"github.com/stretchr/objx"
 )
 
+var avatars Avatar = TryAvatars{
+	UseFileSystemAvatar,
+	UseAuthAvatar,
+	UseGravatar,
+}
+
 type templateHandler struct {
 	once       sync.Once
 	filename   string
@@ -51,7 +57,7 @@ func main() {
 		facebook.New(os.Getenv("facebook_key"), os.Getenv("facebook_secret"), "http://localhost:8080/auth/callback/facebook"),
 	)
 
-	r := newRoom(UseFileSystemAvatar)
+	r := newRoom()
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
