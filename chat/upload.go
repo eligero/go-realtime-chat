@@ -2,10 +2,10 @@ package main
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 func uploaderHandler(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +15,7 @@ func uploaderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -32,11 +32,27 @@ func uploaderHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Write file
 	filename := path.Join("avatars", userId+path.Ext(header.Filename))
-	err = ioutil.WriteFile(filename, data, 0777)
+	err = os.WriteFile(filename, data, 0777)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Remove previous uploaded avatars
+	files, err := filepath.Glob("avatars/" + userId + "*")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for _, f := range files {
+		if f != filename {
+			if err := os.Remove(f); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 	io.WriteString(w, "Successful")
 }
