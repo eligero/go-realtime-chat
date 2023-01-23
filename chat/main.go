@@ -16,11 +16,7 @@ import (
 	"github.com/stretchr/objx"
 )
 
-var avatars Avatar = TryAvatars{
-	UseFileSystemAvatar,
-	UseAuthAvatar,
-	UseGravatar,
-}
+var avatars Avatar = UseAuthAvatar
 
 type templateHandler struct {
 	once       sync.Once
@@ -59,6 +55,10 @@ func main() {
 
 	r := newRoom()
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Location", "/chat")
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	})
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
 	http.HandleFunc("/auth/", loginHandler)
@@ -80,6 +80,9 @@ func main() {
 		http.StripPrefix(
 			"/avatars/",
 			http.FileServer(http.Dir("./avatars"))))
+
+	http.Handle("/image", &templateHandler{filename: "image.html"})
+	http.HandleFunc("/imager/", imageHandler)
 
 	// Run the room in a goroutine
 	go r.run()

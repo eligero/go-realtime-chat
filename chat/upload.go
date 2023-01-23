@@ -54,5 +54,6 @@ func uploaderHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	io.WriteString(w, "Successful")
+	w.Header().Set("Location", "/imager/file")
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
